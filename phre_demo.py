@@ -105,7 +105,7 @@ v2 = v2[mask].reshape((n, m))
 v3 = v3[mask].reshape((n, m))
 v4 = v4[mask].reshape((n, m))
 
-if args.disply:
+if args.display:
     tools.stackview([img, v0, v1, v2, v3, v4], width=20, method='Pillow')
 
 res = (v4 * 255).astype(np.uint8)

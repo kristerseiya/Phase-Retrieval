@@ -108,6 +108,6 @@ v4 = v4[mask].reshape((n, m))
 if args.display:
     tools.stackview([img, v0, v1, v2, v3, v4], width=20, method='Pillow')
 
-res = (v4 * 255).astype(np.uint8)
-res = Image.fromarray(res)
+res = np.clip(res * 255, 0, 255)
+res = Image.fromarray(res.astype(np.uint8))
 res.save(args.save, format='PNG')

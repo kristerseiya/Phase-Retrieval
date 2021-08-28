@@ -17,7 +17,8 @@ parser.add_argument('--lambd', type=float, default=1)
 parser.add_argument('--noise', type=float, default=1)
 parser.add_argument('--samprate', type=float, default=2)
 parser.add_argument('--beta', type=float, default=0.9)
-# parser.add_argument('--gpu', action='store_true')
+parser.add_argument('--display', action='store_true')
+parser.add_argument('--save', default='recon.png')
 args = parser.parse_args()
 
 iters = [50, 200, 200, 200, 200]
@@ -61,15 +62,15 @@ img = np.pad(img, ((pad_len_1, pad_len_1), (pad_len_2, pad_len_2)), 'constant', 
 mask = np.ones(img.shape, dtype=bool) * False
 mask[pad_len_1:-pad_len_1, pad_len_2:-pad_len_2] = True
 
-# y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noise / 255.
-y = np.real(np.abs(tools.fft2d(img)))
-alpha = 10 / 255.
-intensity_noise = alpha * y * np.random.normal(size=img.shape)
-y = (y**2 + intensity_noise)
-y = y * (y > 0)
-y = np.sqrt(y)
+y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noise / 255.
+# y = np.real(np.abs(tools.fft2d(img)))
+# alpha = 10 / 255.
+# intensity_noise = alpha * y * np.random.normal(size=img.shape)
+# y = (y**2 + intensity_noise)
+# y = y * (y > 0)
+# y = np.sqrt(y)
 
-v0 = algo.hio(y, mask, iters[0], beta=args.beta)
+v0 = algo.hio(y, mask, iters[0], beta=args.beta, verbose=False)
 
 v0[~mask] = np.zeros(img.size - mask.sum())
 
@@ -77,25 +78,25 @@ fidelity = DiffractFidelity(y, 65**2 / (args.noise**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn65_17.pth')
 optimizer = optim.PnPADMMHIO(fidelity, denoiser)
 optimizer.init(v0, np.zeros(y.shape))
-v1 = optimizer.run(mask, (n, m), iter=iters[1], return_value='v', verbose=True, beta=args.beta)
+v1 = optimizer.run(mask, (n, m), iter=iters[1], return_value='v', verbose=False, beta=args.beta)
 
 fidelity = DiffractFidelity(y, 50**2 / (args.noise**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn50_17.pth')
 optimizer = optim.PnPADMMHIO(fidelity, denoiser)
 optimizer.init(v1, np.zeros(y.shape))
-v2 = optimizer.run(mask, (n, m), iter=iters[2], return_value='v', verbose=True, beta=args.beta)
+v2 = optimizer.run(mask, (n, m), iter=iters[2], return_value='v', verbose=False, beta=args.beta)
 
 fidelity = DiffractFidelity(y, 25**2 / (args.noise**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn25_17.pth')
 optimizer = optim.PnPADMMHIO(fidelity, denoiser)
 optimizer.init(v2, np.zeros(y.shape))
-v3 = optimizer.run(mask, (n, m), iter=iters[3], return_value='v', verbose=True, beta=args.beta)
+v3 = optimizer.run(mask, (n, m), iter=iters[3], return_value='v', verbose=False, beta=args.beta)
 
 fidelity = DiffractFidelity(y, 10**2 / (args.noise**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn10_17.pth')
 optimizer = optim.PnPADMMHIO(fidelity, denoiser)
 optimizer.init(v3, np.zeros(y.shape))
-v4 = optimizer.run(mask, (n, m), iter=iters[4], return_value='v', verbose=True, beta=args.beta)
+v4 = optimizer.run(mask, (n, m), iter=iters[4], return_value='v', verbose=False, beta=args.beta)
 
 img = img[mask].reshape((n, m))
 v0 = v0[mask].reshape((n, m))
@@ -104,4 +105,9 @@ v2 = v2[mask].reshape((n, m))
 v3 = v3[mask].reshape((n, m))
 v4 = v4[mask].reshape((n, m))
 
-tools.stackview([img, v0, v1, v2, v3, v4], width=20, method='Pillow')
+if args.disply:
+    tools.stackview([img, v0, v1, v2, v3, v4], width=20, method='Pillow')
+
+res = (v4 * 255).astype(np.uint8)
+res = Image.fromarray(res)
+res.save(save, format='PNG')

@@ -5,8 +5,7 @@ from PIL import Image
 import argparse
 
 import tools
-import noise
-import func
+import dnse
 from DnCNN import load_dncnn
 import torch
 
@@ -19,7 +18,7 @@ args = parser.parse_args()
 
 img = Image.open(args.image).convert('L')
 img = np.array(img) / 255.
-noisy = noise.add_gauss(img, args.noise_lvl / 255.)
+noisy = img + np.random.normal(size=img.shape) * args.noise_lvl / 255.
 
 if args.denoiser == 'dncnn':
     net = load_dncnn(args.weights)
@@ -29,10 +28,10 @@ if args.denoiser == 'dncnn':
     y = y.view(y.size(-2), y.size(-1))
     recon = y.cpu().numpy()
 elif args.denoiser == 'bm3d':
-    bm3d= func.BM3D(lambd=(args.noise_lvl/255.)**2)
+    bm3d= dnse.BM3D(lambd=(args.noise_lvl/255.)**2)
     recon = bm3d(noisy)
 elif args.denoiser == 'tv':
-    tvprox = func.ProxTV(lambd=(args.noise_lvl/255.*7)**2)
+    tvprox = dnse.ProxTV(lambd=(args.noise_lvl/255.*7)**2)
     recon = tvprox(noisy)
 
 mse, psnr = tools.compute_mse(img, recon, scale=1)

@@ -14,10 +14,10 @@ def dct2d(x):
     return dct(dct(x, axis=0, norm='ortho'), axis=1, norm='ortho')
 
 def ifft2d(x):
-    return ifft(ifft(x, axis=0), axis=1)
+    return ifft(ifft(x, axis=0), axis=1) * np.sqrt(x.size)
 
 def fft2d(x):
-    return fft(fft(x, axis=0), axis=1)
+    return fft(fft(x, axis=0), axis=1) / np.sqrt(x.size)
 
 def image2uint8(img):
     if img.dtype != np.uint8:

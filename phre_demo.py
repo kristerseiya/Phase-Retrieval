@@ -110,4 +110,4 @@ if args.display:
 
 res = (v4 * 255).astype(np.uint8)
 res = Image.fromarray(res)
-res.save(save, format='PNG')
+res.save(args.save, format='PNG')

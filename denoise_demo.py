@@ -5,7 +5,7 @@ from PIL import Image
 import argparse
 
 import tools
-import dnse
+import dnsr
 from DnCNN import load_dncnn
 import torch
 
@@ -28,10 +28,10 @@ if args.denoiser == 'dncnn':
     y = y.view(y.size(-2), y.size(-1))
     recon = y.cpu().numpy()
 elif args.denoiser == 'bm3d':
-    bm3d= dnse.BM3D(lambd=(args.noise_lvl/255.)**2)
+    bm3d= dnsr.BM3D(lambd=(args.noise_lvl/255.)**2)
     recon = bm3d(noisy)
 elif args.denoiser == 'tv':
-    tvprox = dnse.ProxTV(lambd=(args.noise_lvl/255.*7)**2)
+    tvprox = dnsr.ProxTV(lambd=(args.noise_lvl/255.*7)**2)
     recon = tvprox(noisy)
 
 mse, psnr = tools.compute_mse(img, recon, scale=1)

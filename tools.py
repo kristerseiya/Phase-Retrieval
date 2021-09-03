@@ -44,6 +44,7 @@ def stackview(imgs, width=20, method='matplotlib'):
         else:
             view = Image.fromarray(view, 'L')
         view.show()
+        return view
     elif method == 'matplotlib':
         if color:
             plt.imshow(view)

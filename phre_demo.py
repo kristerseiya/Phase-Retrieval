@@ -31,7 +31,7 @@ for i, it in enumerate(args.iter):
 
 tau = 1
 
-class DiffractFidelity:
+class FourMagMSE:
     def __init__(self, y, alpha, mask):
         self.y = y
         self.alpha = alpha
@@ -74,25 +74,25 @@ v0 = algo.hio(y, mask, iters[0], beta=args.beta, verbose=False)
 
 v0[~mask] = np.zeros(img.size - mask.sum())
 
-fidelity = DiffractFidelity(y, 65**2 / (args.noise**2), mask)
+fidelity = FourMagMSE(y, 65**2 / (args.noise**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn65_17.pth')
 optimizer = optim.PnPADMMHIO(fidelity, denoiser)
 optimizer.init(v0, np.zeros(y.shape))
 v1 = optimizer.run(mask, (n, m), iter=iters[1], return_value='v', verbose=False, beta=args.beta)
 
-fidelity = DiffractFidelity(y, 50**2 / (args.noise**2), mask)
+fidelity = FourMagMSE(y, 50**2 / (args.noise**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn50_17.pth')
 optimizer = optim.PnPADMMHIO(fidelity, denoiser)
 optimizer.init(v1, np.zeros(y.shape))
 v2 = optimizer.run(mask, (n, m), iter=iters[2], return_value='v', verbose=False, beta=args.beta)
 
-fidelity = DiffractFidelity(y, 25**2 / (args.noise**2), mask)
+fidelity = FourMagMSE(y, 25**2 / (args.noise**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn25_17.pth')
 optimizer = optim.PnPADMMHIO(fidelity, denoiser)
 optimizer.init(v2, np.zeros(y.shape))
 v3 = optimizer.run(mask, (n, m), iter=iters[3], return_value='v', verbose=False, beta=args.beta)
 
-fidelity = DiffractFidelity(y, 10**2 / (args.noise**2), mask)
+fidelity = FourMagMSE(y, 10**2 / (args.noise**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn10_17.pth')
 optimizer = optim.PnPADMMHIO(fidelity, denoiser)
 optimizer.init(v3, np.zeros(y.shape))

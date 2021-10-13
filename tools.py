@@ -64,13 +64,14 @@ def compute_mse(x, y, scale=None):
     psnr = 10 * np.log10(scale**2 / mse)
     return mse, psnr
 
-def get_gauss2d(h, w, sigma):
-    gauss_1d_w = np.array([np.exp(-(x-w//2)**2/float(2**sigma**2)) for x in range(w)])
-    gauss_1d_w = gauss_1d_w / gauss_1d_w.sum()
-    gauss_1d_h = np.array([np.exp(-(x-h//2)**2/float(2**sigma**2)) for x in range(h)])
-    gauss_1d_h = gauss_1d_h
+def get_gauss2d(shape, sigma, normalize=False):
+    gauss_1d_w = np.array([np.exp(-((x-shape[0]//2)/float(2**sigma[0]))**2) for x in range(shape[0])])
+    gauss_1d_h = np.array([np.exp(-((x-shape[1]//2)/float(2**sigma[1]))**2) for x in range(shape[1])])
+    # gauss_1d_w = np.array([np.exp(-(x-shape[0]//2)**2/float(2**sigma[0]**2)) for x in range(shape[0])])
+    # gauss_1d_h = np.array([np.exp(-(x-shape[1]//2)**2/float(2**sigma[1]**2)) for x in range(shape[1])])
     gauss_2d = np.array([gauss_1d_w * s for s in gauss_1d_h])
-    gauss_2d = gauss_2d / gauss_2d.sum()
+    if normalize:
+        gauss_2d = gauss_2d / gauss_2d.sum()
     return gauss_2d
 
 # def compute_ssim(img1, img2, window_size=11, sigma=1.5):

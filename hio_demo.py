@@ -19,7 +19,6 @@ args = parser.parse_args()
 img = Image.open(args.image).convert('L')
 img = np.array(img) / 255.
 n, m = img.shape
-img = img + np.random.normal(size=img.shape) * args.noiselvl / 255.
 
 pad_len_1 = int(img.shape[0] * (np.sqrt(args.samprate) - 1)) // 2
 pad_len_2 = int(img.shape[1] * (np.sqrt(args.samprate) - 1)) // 2

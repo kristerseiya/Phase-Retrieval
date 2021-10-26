@@ -1,8 +1,12 @@
 # Phase-Retrieval
-This is an experimental implementaion of phase-retrieval algorithm based on Gerchberg-Saxton and Plug-and-Play ADMM. 
+This is an experimental implementaion of phase-retrieval algorithm based on Gerchberg-Saxton and Plug-and-Play ADMM.
 
 ## What is "Phase Retrieval"?
 Phase retrieval is a method where we tried to retrieve x (image) from observation |Ax|. A is a measurement matrix. Here, we only look at DFT matrix as our measurement matrix.
+
+![Alt text](result/ghost_azrael_phre.png?raw=true "GT vs. HIO vs. PnP")
+Phase retrieval of Fourier magnitude with added Gaussian noise \sigma = 5.
+(Left) Ground truth (Middle) HIO 2000 iterations (Right) proposed algorithm.
 
 ## Command Line
 
@@ -24,7 +28,7 @@ python phre_demo.py -h
   --hioiter HIOITER         number of iterations of HIO (initialization)
   --pnpiter PNPITER         total number of iterations with PnP-ADMM
   --noise NOISE             the noise level added to the measurement
-  --samprate SAMPRATE       oversampling rate for the measurement 
+  --samprate SAMPRATE       oversampling rate for the measurement
   --display DISPLAY         display result if given
   --save SAVE               save result if given
 ```

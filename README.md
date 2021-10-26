@@ -1,11 +1,11 @@
-# Phase-Retrieval
+# Phase Retrieval with Plug-and-Play ADMM
 This is an experimental implementaion of phase-retrieval algorithm based on Gerchberg-Saxton and Plug-and-Play ADMM.
 
 ## What is "Phase Retrieval"?
 Phase retrieval is a method where we tried to retrieve x (image) from observation |Ax|. A is a measurement matrix. Here, we only look at DFT matrix as our measurement matrix.
 
 ![Alt text](result/ghost_azrael_phre.png?raw=true "GT vs. HIO vs. PnP")
-Phase retrieval of Fourier magnitude with added Gaussian noise \sigma = 5.
+Phase retrieval of Fourier magnitude with added Gaussian noise σ = 5.
 (Left) Ground truth (Middle) HIO 2000 iterations (Right) proposed algorithm.
 
 ## Command Line

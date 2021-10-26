@@ -8,6 +8,7 @@ import tools
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', type=str, required=True)
+parser.add_argument('--samprate', type=float, default=2)
 parser.add_argument('--iter', type=int, default=2000)
 parser.add_argument('--beta', type=float, default=0.9)
 parser.add_argument('--noiselvl', type=float, default=0.)
@@ -20,8 +21,9 @@ img = np.array(img) / 255.
 n, m = img.shape
 img = img + np.random.normal(size=img.shape) * args.noiselvl / 255.
 
-pad_len_1 = img.shape[0] // 2
-pad_len_2 = img.shape[1] // 2
+pad_len_1 = int(img.shape[0] * (np.sqrt(args.samprate) - 1)) // 2
+pad_len_2 = int(img.shape[1] * (np.sqrt(args.samprate) - 1)) // 2
+n, m = img.shape
 img = np.pad(img, ((pad_len_1, pad_len_1), (pad_len_2, pad_len_2)), 'constant', constant_values=((0, 0), (0, 0)))
 mask = np.ones(img.shape, dtype=bool) * False
 mask[pad_len_1:-pad_len_1, pad_len_2:-pad_len_2] = True
@@ -43,6 +45,6 @@ if args.display:
     tools.stackview([img, x], method='Pillow')
 
 if args.save != None:
-    res = np.clip(v3 * 255, 0, 255)
+    res = np.clip(x * 255, 0, 255)
     res = Image.fromarray(res.astype(np.uint8))
     res.save(args.save, format='PNG')

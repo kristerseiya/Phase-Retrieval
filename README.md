@@ -19,7 +19,7 @@ python phre_demo.py \
        --samprate 4 \
        --iter 100 \
        --display \
-       --save
+       --save tiger_recon.png
 ```
 ```markdown
 python phre_demo.py -h
@@ -30,5 +30,5 @@ python phre_demo.py -h
   --noise NOISE             the noise level added to the measurement
   --samprate SAMPRATE       oversampling rate for the measurement
   --display DISPLAY         display result if given
-  --save SAVE               save result if given
+  --save SAVE               save result if given a filename
 ```

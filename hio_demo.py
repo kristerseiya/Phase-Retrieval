@@ -8,7 +8,7 @@ import tools
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', type=str, required=True)
-parser.add_argument('--samprate', type=float, default=2)
+parser.add_argument('--samprate', type=float, default=4)
 parser.add_argument('--iter', type=int, default=2000)
 parser.add_argument('--beta', type=float, default=0.9)
 parser.add_argument('--noise', type=float, default=0.)
@@ -33,7 +33,7 @@ mask[pad_len_1:-pad_len_1, pad_len_2:-pad_len_2] = True
 y = np.abs(tools.fft2d(img)) + np.random.normal(size=img.shape) * args.noise / 255.
 
 x = algo.hio(y, mask, args.iter, beta=args.beta)
-# x2 = algo.oss(y, mask)
+# x = algo.oss(y, mask)
 
 img = img[mask].reshape((n, m))
 x = x[mask].reshape((n, m))

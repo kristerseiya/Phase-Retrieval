@@ -30,13 +30,13 @@ class PnPADMMHIO:
             if verbose:
                 print('Iteration #{:d}'.format(i+1))
 
-            x = self.fidelity.prox(self.transform.inverse(v-u))
+            x = self.fidelity.prox(v-u)
             # x[~support] = np.zeros(support.size - support.sum())
 
             # idx = (x < 0) + (support == False)
             # x[idx] = x[idx] - beta * x[idx]
 
-            x_relaxed = (1 - relax) * self.transform(x) + relax * v
+            x_relaxed = (1 - relax) * x + relax * v
             tmp = x_relaxed + u
 
             tmp = (tmp[support]).reshape(imgshape)

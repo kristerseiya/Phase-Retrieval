@@ -16,7 +16,8 @@ def hio(y, mask, iter, beta=0.9, verbose=False):
 
         Fx_curr = y * np.exp(1j * phase)
         x_curr = np.real(tools.ifft2d(Fx_curr))
-        idx = (x_curr < 0) + (mask == False)
+        idx = ((1+beta)*x_curr < x_prev) + (mask == False)
+        # idx = (x_curr < 0) + (mask == False)
         x_curr[idx] = x_prev[idx] - beta * x_curr[idx]
         Fx_curr = tools.fft2d(x_curr)
         phase = np.angle(Fx_curr)

@@ -9,7 +9,7 @@ class IdentityTransform:
     def inverse(self, v):
         return v
 
-class PnPADMMHIO:
+class PPR:
     def __init__(self, fidelity, denoiser, transform=None):
         self.fidelity = fidelity
         self.denoiser = denoiser
@@ -19,11 +19,13 @@ class PnPADMMHIO:
         self.v_init = copy.deepcopy(v)
         self.u_init = copy.deepcopy(u)
 
-    def run(self, support, imgshape, beta=0.8,
+    def run(self, support, imgshape,
             iter=100, relax=0., return_value='both', verbose=False):
 
         v = self.v_init
         u = self.u_init
+
+        v[~support] = np.zeros((~support).sum())
 
         for i in range(iter):
 
@@ -37,16 +39,19 @@ class PnPADMMHIO:
             # x[idx] = x[idx] - beta * x[idx]
 
             x_relaxed = (1 - relax) * x + relax * v
-            tmp = x_relaxed + u
+            xu = x_relaxed + u
+            xu = (xu[support]).reshape(imgshape)
 
-            tmp = (tmp[support]).reshape(imgshape)
+            v[support] = self.denoiser(xu).flatten()
 
-            v[support] = self.denoiser(tmp).flatten()
+            idx = (v < 0) * support
+            v[idx] = np.zeros(idx.sum())
+
             # v = self.denoiser(tmp)
 
-            idx = (v < 0) + (support == False)
-            # # idx = (support == False)
-            v[idx] = v[idx] - beta * v[idx]
+            # idx = (v < 0) + (support == False)
+            # # # idx = (support == False)
+            # v[idx] = v[idx] - beta * v[idx]
             # v[idx] = np.zeros(idx.sum())
 
 

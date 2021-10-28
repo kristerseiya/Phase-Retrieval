@@ -15,7 +15,8 @@ parser.add_argument('--hioiter', type=int, default=50)
 parser.add_argument('--pnpiter', type=int, default=600)
 parser.add_argument('--alpha', type=float, default=2500)
 parser.add_argument('--lambd', type=float, default=1)
-parser.add_argument('--noise', type=float, default=1)
+parser.add_argument('--noise', type=str, default='gaussian')
+parser.add_argument('--noiselvl', type=float, default=1)
 parser.add_argument('--samprate', type=float, default=4)
 parser.add_argument('--beta', type=float, default=0.9)
 parser.add_argument('--display', action='store_true')
@@ -58,40 +59,40 @@ img = np.pad(img, ((pad_len_1, pad_len_1), (pad_len_2, pad_len_2)), 'constant', 
 mask = np.ones(img.shape, dtype=bool) * False
 mask[pad_len_1:-pad_len_1, pad_len_2:-pad_len_2] = True
 
-y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noise / 255.
-# y = np.real(np.abs(tools.fft2d(img)))
-# alpha = 10 / 255.
-# intensity_noise = alpha * y * np.random.normal(size=img.shape)
-# y = (y**2 + intensity_noise)
-# y = y * (y > 0)
-# y = np.sqrt(y)
+if args.noise == 'gaussian':
+    y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noise / 255.
+    sigma = args.noiselvl if args.noiselvl > 0 else 1
+
+elif args.noise == 'poisson':
+    yy = np.real(np.abs(tools.fft2d(img)))
+    alpha = args.noiselvl / 255.
+    intensity_noise = alpha * yy * np.random.normal(size=img.shape)
+    y = (yy**2 + intensity_noise)
+    y = y * (y > 0)
+    y = np.sqrt(y)
+    sigma = np.std(y - yy) * 255.
 
 v0 = algo.hio(y, mask, args.hioiter, beta=args.beta, verbose=False)
 
 v0[~mask] = np.zeros(img.size - mask.sum())
 
-if args.noise > 0:
-    sigma = args.noise
-else:
-    sigma = 1
-
 fidelity = FourMagMSE(y, 50**2 / (sigma**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn50_17.pth')
-optimizer = optim.PnPADMMHIO(fidelity, denoiser)
+optimizer = optim.PPR(fidelity, denoiser)
 optimizer.init(v0, np.zeros(y.shape))
-v1 = optimizer.run(mask, (n, m), iter=pnpiter1, return_value='v', verbose=False, beta=args.beta)
+v1 = optimizer.run(mask, (n, m), iter=pnpiter1, return_value='v', verbose=False)
 
 fidelity = FourMagMSE(y, 25**2 / (sigma**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn25_17.pth')
-optimizer = optim.PnPADMMHIO(fidelity, denoiser)
+optimizer = optim.PPR(fidelity, denoiser)
 optimizer.init(v1, np.zeros(y.shape))
-v2 = optimizer.run(mask, (n, m), iter=pnpiter2, return_value='v', verbose=False, beta=args.beta)
+v2 = optimizer.run(mask, (n, m), iter=pnpiter2, return_value='v', verbose=False)
 
 fidelity = FourMagMSE(y, 10**2 / (sigma**2), mask)
 denoiser = dnsr.DnCNN('DnCNN/weights/dncnn10_17.pth')
-optimizer = optim.PnPADMMHIO(fidelity, denoiser)
+optimizer = optim.PPR(fidelity, denoiser)
 optimizer.init(v2, np.zeros(y.shape))
-v3 = optimizer.run(mask, (n, m), iter=pnpiter3, return_value='v', verbose=False, beta=args.beta)
+v3 = optimizer.run(mask, (n, m), iter=pnpiter3, return_value='v', verbose=False)
 
 img = img[mask].reshape((n, m))
 v0 = v0[mask].reshape((n, m))

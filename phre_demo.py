@@ -10,17 +10,18 @@ import algo
 import tools
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--image', type=str, required=True)
-parser.add_argument('--hioiter', type=int, default=50)
-parser.add_argument('--pnpiter', type=int, default=600)
-parser.add_argument('--alpha', type=float, default=2500)
-parser.add_argument('--lambd', type=float, default=1)
-parser.add_argument('--noise', type=str, default='gaussian')
-parser.add_argument('--noiselvl', type=float, default=1)
-parser.add_argument('--samprate', type=float, default=4)
-parser.add_argument('--beta', type=float, default=0.9)
-parser.add_argument('--display', action='store_true')
-parser.add_argument('--save', type=str, default=None)
+parser.add_argument('--image', help='path to image', type=str, required=True)
+parser.add_argument('--hioiter', help='number of iterations of HIO (initialization)', type=int, default=50)
+parser.add_argument('--pnpiter', help='total number of iterations with PnP-ADMM', type=int, default=600)
+parser.add_argument('--noise', help='noise type (\'gaussian\' or \'poisson\')', type=str, default='gaussian')
+parser.add_argument('--noiselvl', help='standard deviation if noise type is gaussian,'
+                            'if poisson, the product of this parameter and the signal'
+                            'would be used as a standard deviation of gaussian to'
+                            'simulate a poisson noise', type=float, default=1)
+parser.add_argument('--samprate', help='oversampling rate for the measurement', type=float, default=4)
+parser.add_argument('--beta', help='parameter for HIO', type=float, default=0.9)
+parser.add_argument('--display', help='display result if given', action='store_true')
+parser.add_argument('--save', help='save result if given a filename', type=str, default=None)
 args = parser.parse_args()
 
 pnpiter1 = args.pnpiter - 2 * args.pnpiter // 3

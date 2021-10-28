@@ -15,7 +15,8 @@ python phre_demo.py \
        --image imgs/tiger_224x224.png \
        --hioiter 50 \
        --pnpiter 600 \
-       --noise 5 \
+       --noise gaussian \
+       --noiselvl 5 \
        --samprate 4 \
        --iter 100 \
        --display \

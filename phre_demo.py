@@ -41,7 +41,6 @@ class FourMagMSE:
     def grad(self, x):
         f = tools.fft2d(x)
         return self.alpha * np.real(tools.ifft2d(f - y * f / np.abs(f)))
-        # return self.alpha * np.real(np.conjugate(tools.fft2d(np.conjugate(f) - self.y * np.conjugate(f) / np.abs(f))))
 
     def prox(self, x, tau=1):
         xf = tools.fft2d(x)
@@ -61,7 +60,10 @@ mask = np.ones(img.shape, dtype=bool) * False
 mask[pad_len_1:-pad_len_1, pad_len_2:-pad_len_2] = True
 
 if args.noise == 'gaussian':
-    y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noise / 255.
+    # y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noiselvl / 255.
+    y = tools.fft2d(img) + (np.random.normal(size=img.shape) + 1j * np.random.normal(size=img.shape)) * args.noiselvl / 255. / np.sqrt(2)
+    y = np.abs(y)
+    # print(np.std(y - np.abs(tools.fft2d(img)))*255)
     sigma = args.noiselvl if args.noiselvl > 0 else 1
 
 elif args.noise == 'poisson':

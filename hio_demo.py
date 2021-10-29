@@ -11,7 +11,11 @@ parser.add_argument('--image', type=str, required=True)
 parser.add_argument('--samprate', type=float, default=4)
 parser.add_argument('--iter', type=int, default=2000)
 parser.add_argument('--beta', type=float, default=0.9)
-parser.add_argument('--noise', type=float, default=0.)
+parser.add_argument('--noise', help='noise type (\'gaussian\' or \'poisson\')', type=str, default='gaussian')
+parser.add_argument('--noiselvl', help='standard deviation if noise type is gaussian,'
+                            'if poisson, the product of this parameter and the signal'
+                            'would be used as a standard deviation of gaussian to'
+                            'simulate a poisson noise', type=float, default=1)
 parser.add_argument('--display', action='store_true')
 parser.add_argument('--save', type=str, default=None)
 args = parser.parse_args()
@@ -30,7 +34,21 @@ mask[pad_len_1:-pad_len_1, pad_len_2:-pad_len_2] = True
 # sd = 0.1 * np.sqrt(n*m)
 # noise = np.random.normal(size=img.shape) * sd + 1j * np.random.normal(size=img.shape) * sd
 # noise = 0
-y = np.abs(tools.fft2d(img)) + np.random.normal(size=img.shape) * args.noise / 255.
+
+if args.noise == 'gaussian':
+    # y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noise / 255.
+    y = tools.fft2d(img) + (np.random.normal(size=img.shape) + 1j * np.random.normal(size=img.shape)) * args.noiselvl / 255. / np.sqrt(2)
+    y = np.abs(y)
+
+elif args.noise == 'poisson':
+    yy = np.real(np.abs(tools.fft2d(img)))
+    alpha = args.noiselvl / 255.
+    intensity_noise = alpha * yy * np.random.normal(size=img.shape)
+    y = (yy**2 + intensity_noise)
+    y = y * (y > 0)
+    y = np.sqrt(y)
+
+# y = np.abs(tools.fft2d(img)) + np.random.normal(size=img.shape) * args.noise / 255.
 
 x = algo.hio(y, mask, args.iter, beta=args.beta)
 # x = algo.oss(y, mask)

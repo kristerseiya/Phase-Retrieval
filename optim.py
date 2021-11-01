@@ -2,18 +2,10 @@
 import numpy as np
 import copy
 
-class IdentityTransform:
-    def __call__(self, x):
-        return x
-
-    def inverse(self, v):
-        return v
-
 class PPR:
-    def __init__(self, fidelity, denoiser, transform=None):
+    def __init__(self, fidelity, denoiser):
         self.fidelity = fidelity
         self.denoiser = denoiser
-        self.transform = transform if transform != None else IdentityTransform()
 
     def init(self, v, u):
         self.v_init = copy.deepcopy(v)
@@ -33,10 +25,6 @@ class PPR:
                 print('Iteration #{:d}'.format(i+1))
 
             x = self.fidelity.prox(v-u)
-            # x[~support] = np.zeros(support.size - support.sum())
-
-            # idx = (x < 0) + (support == False)
-            # x[idx] = x[idx] - beta * x[idx]
 
             x_relaxed = (1 - relax) * x + relax * v
             xu = x_relaxed + u
@@ -46,8 +34,6 @@ class PPR:
 
             idx = (v < 0) * support
             v[idx] = np.zeros(idx.sum())
-
-            # v = self.denoiser(tmp)
 
             # idx = (v < 0) + (support == False)
             # # # idx = (support == False)

@@ -7,7 +7,7 @@ import scipy.io
 
 import algo
 import tools
-import dnsr
+from Denoisers import dnsr
 import optim
 
 parser = argparse.ArgumentParser()

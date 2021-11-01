@@ -4,10 +4,10 @@ from PIL import Image
 from scipy.fftpack import fft, ifft, fftshift
 import argparse
 
-import dnsr
 import optim
 import algo
 import tools
+from Denoisers import dnsr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', help='path to image', type=str, required=True)
@@ -80,19 +80,19 @@ v0 = algo.hio(y, mask, args.hioiter, beta=args.beta, verbose=False)
 v0[~mask] = np.zeros(img.size - mask.sum())
 
 fidelity = FourMagMSE(y, 50**2 / (sigma**2), mask)
-denoiser = dnsr.DnCNN('DnCNN/weights/dncnn50_17.pth')
+denoiser = dnsr.DnCNN('Denoisers/dnsr/DnCNN/weights/dncnn50_17.pth')
 optimizer = optim.PPR(fidelity, denoiser)
 optimizer.init(v0, np.zeros(y.shape))
 v1 = optimizer.run(mask, (n, m), iter=pnpiter1, return_value='v', verbose=False)
 
 fidelity = FourMagMSE(y, 25**2 / (sigma**2), mask)
-denoiser = dnsr.DnCNN('DnCNN/weights/dncnn25_17.pth')
+denoiser = dnsr.DnCNN('Denoisers/dnsr/DnCNN/weights/dncnn25_17.pth')
 optimizer = optim.PPR(fidelity, denoiser)
 optimizer.init(v1, np.zeros(y.shape))
 v2 = optimizer.run(mask, (n, m), iter=pnpiter2, return_value='v', verbose=False)
 
 fidelity = FourMagMSE(y, 10**2 / (sigma**2), mask)
-denoiser = dnsr.DnCNN('DnCNN/weights/dncnn10_17.pth')
+denoiser = dnsr.DnCNN('Denoisers/dnsr/DnCNN/weights/dncnn10_17.pth')
 optimizer = optim.PPR(fidelity, denoiser)
 optimizer.init(v2, np.zeros(y.shape))
 v3 = optimizer.run(mask, (n, m), iter=pnpiter3, return_value='v', verbose=False)

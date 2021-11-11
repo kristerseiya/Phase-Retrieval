@@ -35,11 +35,6 @@ class PPR:
             idx = (v < 0) * support
             v[idx] = np.zeros(idx.sum())
 
-            # idx = (v < 0) + (support == False)
-            # # # idx = (support == False)
-            # v[idx] = v[idx] - beta * v[idx]
-            # v[idx] = np.zeros(idx.sum())
-
 
             diff = x_relaxed - v
             u = u + diff

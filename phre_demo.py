@@ -43,10 +43,14 @@ class FourMagMSE:
         return self.alpha * np.real(tools.ifft2d(f - y * f / np.abs(f)))
 
     def prox(self, x, tau=1):
-        xf = tools.fft2d(x)
-        mag = 1 / (self.alpha + tau) * (self.alpha * self.y + tau * np.abs(xf))
-        res = mag * np.exp(1j*np.angle(xf))
+        # z = np.zeros(y.shape)
+        # z[self.mask] = x.flatten()
+        z = x
+        zf = tools.fft2d(z)
+        mag = 1 / (self.alpha + tau) * (self.alpha * self.y + tau * np.abs(zf))
+        res = mag * np.exp(1j*np.angle(zf))
         res = np.real(tools.ifft2d(res))
+        # return res[self.mask].reshape(x.shape)
         return res
 
 img = Image.open(args.image).convert('L')
@@ -61,9 +65,6 @@ mask[pad_len_1:-pad_len_1, pad_len_2:-pad_len_2] = True
 
 if args.noise == 'gaussian':
     y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noiselvl / 255.
-    # y = tools.fft2d(img) + (np.random.normal(size=img.shape) + 1j * np.random.normal(size=img.shape)) * args.noiselvl / 255. / np.sqrt(2)
-    # y = np.abs(y)
-    # print(np.std(y - np.abs(tools.fft2d(img)))*255)
     sigma = args.noiselvl if args.noiselvl > 0 else 1
 
 elif args.noise == 'poisson':
@@ -74,6 +75,12 @@ elif args.noise == 'poisson':
     y = y * (y > 0)
     y = np.sqrt(y)
     sigma = np.std(y - yy) * 255.
+
+elif args.noise == 'rician':
+    yy = tools.fft2d(img)
+    y = yy + (np.random.normal(size=img.shape) + 1j * np.random.normal(size=img.shape)) * args.noiselvl / 255. / np.sqrt(2)
+    y = np.abs(y)
+    sigma = np.std(y - np.abs(yy))*255
 
 v = algo.hio(y, mask, args.hioiter, beta=args.beta, verbose=False)
 
@@ -91,7 +98,7 @@ for a in alpha:
     denoiser.set_param(a)
     denoiser.set_param(a / 255.)
     optimizer = optim.PPR(fidelity, denoiser)
-    optimizer.init(v, np.zeros(y.shape))
+    optimizer.init(v, np.zeros(v.shape))
     v = optimizer.run(mask, (n, m), iter=100, return_value='v', verbose=False)
     v_arr += [v]
 

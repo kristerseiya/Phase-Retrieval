@@ -41,16 +41,9 @@ def oss(y, mask, beta=0.9, verbose=False):
     FX=(filtercount+1-np.ceil(X*filtercount/iter))*np.ceil(iter/(1*filtercount));
     FX=((FX-np.ceil(iter/filtercount))*(2*Rsize)/np.max(FX))+(2*Rsize/10);
 
-    # for i in range(10):
-    #
-    #     # sigma = (sigma1[i], sigma2[i])
-    #     sigma = (FX[])
-    #     filter = tools.get_gauss2d(y.shape, sigma, normalize=False)
-    #     filter = ifftshift(filter)
-
     for i in range(iter):
 
-        if FX[i-1] != FX[i]:
+        if i == 0 or FX[i-1] != FX[i]:
             sigma = (FX[i], FX[i])
             filter = tools.get_gauss2d(y.shape, sigma, normalize=False)
             filter = ifftshift(filter)
@@ -67,3 +60,35 @@ def oss(y, mask, beta=0.9, verbose=False):
         x_prev = x_curr.copy()
 
     return x_curr
+
+# find eig vector with max eig(A^* diag(y) A)
+# normalize to lambda
+
+def wf(y, mask, iter, verbose=False):
+
+    m = y.size
+    n = mask.sum()
+
+    mu_max = 0.2
+    t0 = 330.
+
+    y = y**2
+    lambd2 = y.sum()
+
+    x = np.random.rand(*y.shape)
+    x[~mask] = np.zeros(m-n)
+    x = x / np.linalg.norm(x, 2)
+    for i in range(1000):
+        x = tools.ifft2d(y * tools.fft2d(x))
+        x[~mask] = np.zeros(m-n)
+        x = x / np.linalg.norm(x, 2)
+    x = x * np.sqrt(lambd2)
+
+    for t in range(iter):
+        mu = np.min([1 - np.exp(-t/t0), mu_max])
+        f = tools.fft2d(x)
+        x = x - mu * tools.ifft2d((f**2 - y)*f) / lambd2
+        x[~mask] = np.zeros(m-n)
+        x = np.real(x)
+    res = np.real(x)
+    return res

@@ -36,9 +36,7 @@ mask[pad_len_1:-pad_len_1, pad_len_2:-pad_len_2] = True
 # noise = 0
 
 if args.noise == 'gaussian':
-    # y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noise / 255.
-    y = tools.fft2d(img) + (np.random.normal(size=img.shape) + 1j * np.random.normal(size=img.shape)) * args.noiselvl / 255. / np.sqrt(2)
-    y = np.abs(y)
+    y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noiselvl / 255.
 
 elif args.noise == 'poisson':
     yy = np.real(np.abs(tools.fft2d(img)))
@@ -48,10 +46,14 @@ elif args.noise == 'poisson':
     y = y * (y > 0)
     y = np.sqrt(y)
 
-# y = np.abs(tools.fft2d(img)) + np.random.normal(size=img.shape) * args.noise / 255.
+elif args.noise == 'rician':
+    yy = tools.fft2d(img)
+    y = yy + (np.random.normal(size=img.shape) + 1j * np.random.normal(size=img.shape)) * args.noiselvl / 255. / np.sqrt(2)
+    y = np.abs(y)
 
 x = algo.hio(y, mask, args.iter, beta=args.beta)
 # x = algo.oss(y, mask)
+# x = algo.wf(y, mask, args.iter)
 
 img = img[mask].reshape((n, m))
 x = x[mask].reshape((n, m))

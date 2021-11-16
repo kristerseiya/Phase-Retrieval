@@ -100,7 +100,7 @@ class FourMagMSE:
         res = np.real(tools.ifft2d(res))
         return res
 
-class SpaceCnstrat:
+class SpaceConstraint:
     def __init__(self, mask, supdim):
         self.mask = mask
         self.supdim = supdim
@@ -116,12 +116,12 @@ class SpaceCnstrat:
         v[idx] = np.zeros(idx.sum())
         return v
 
-spcnst = SpaceCnstrat(mask, img.shape)
+prior = SpaceConstraint(mask, img.shape)
 
 for it, a in zip(args.pnpiter, args.sigma):
     fidelity = FourMagMSE(y, a**2 / (sigma**2), mask)
-    spcnst.denoiser.set_param(a / 255.)
-    optimizer = optim.ADMM(fidelity, spcnst)
+    prior.denoiser.set_param(a / 255.)
+    optimizer = optim.ADMM(fidelity, prior)
     optimizer.init(v, np.zeros(v.shape))
     v = optimizer.run(iter=it, return_value='v', verbose=False)
     v_arr += [v]

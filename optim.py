@@ -2,41 +2,33 @@
 import numpy as np
 import copy
 
-class PPR:
-    def __init__(self, fidelity, denoiser):
-        self.fidelity = fidelity
-        self.denoiser = denoiser
+class ADMM:
+    def __init__(self, f, g):
+        self.f = f
+        self.g = g
 
     def init(self, v, u):
         self.v_init = copy.deepcopy(v)
         self.u_init = copy.deepcopy(u)
 
-    def run(self, support, imgshape,
-            iter=100, relax=0., return_value='both', verbose=False):
+    def run(self, iter=100, relax=0., return_value='both', verbose=False):
 
         v = self.v_init
         u = self.u_init
-
-        v[~support] = np.zeros((~support).sum())
 
         for i in range(iter):
 
             if verbose:
                 print('Iteration #{:d}'.format(i+1))
 
-            x = self.fidelity.prox(v-u)
+            x = self.f.prox(v-u)
 
-            x_relaxed = (1 - relax) * x + relax * v
-            xu = x_relaxed + u
-            xu = (xu[support]).reshape(imgshape)
+            xr = (1 - relax) * x + relax * v
+            xu = xr + u
 
-            v[support] = self.denoiser(xu).flatten()
-
-            idx = (v < 0) * support
-            v[idx] = np.zeros(idx.sum())
-
-
-            diff = x_relaxed - v
+            v = self.g.prox(xu)
+            
+            diff = xr - v
             u = u + diff
 
         if return_value == 'both':

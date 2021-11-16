@@ -26,39 +26,31 @@ n, m = img.shape
 
 pad_len_1 = int(img.shape[0] * (np.sqrt(args.samprate) - 1)) // 2
 pad_len_2 = int(img.shape[1] * (np.sqrt(args.samprate) - 1)) // 2
-n, m = img.shape
-img = np.pad(img, ((pad_len_1, pad_len_1), (pad_len_2, pad_len_2)), 'constant', constant_values=((0, 0), (0, 0)))
-mask = np.ones(img.shape, dtype=bool) * False
+imgpad = np.pad(img, ((pad_len_1, pad_len_1), (pad_len_2, pad_len_2)), 'constant', constant_values=((0, 0), (0, 0)))
+mask = np.ones(imgpad.shape, dtype=bool) * False
 mask[pad_len_1:-pad_len_1, pad_len_2:-pad_len_2] = True
 
-# sd = 0.1 * np.sqrt(n*m)
-# noise = np.random.normal(size=img.shape) * sd + 1j * np.random.normal(size=img.shape) * sd
-# noise = 0
-
 if args.noise == 'gaussian':
-    y = np.real(np.abs(tools.fft2d(img))) + np.random.normal(size=img.shape) * args.noiselvl / 255.
+    y = np.real(np.abs(tools.fft2d(imgpad))) + np.random.normal(size=imgpad.shape) * args.noiselvl / 255.
 
 elif args.noise == 'poisson':
-    yy = np.real(np.abs(tools.fft2d(img)))
+    yy = np.real(np.abs(tools.fft2d(imgpad)))
     alpha = args.noiselvl / 255.
-    intensity_noise = alpha * yy * np.random.normal(size=img.shape)
+    intensity_noise = alpha * yy * np.random.normal(size=imgpad.shape)
     y = (yy**2 + intensity_noise)
     y = y * (y > 0)
     y = np.sqrt(y)
 
 elif args.noise == 'rician':
     yy = tools.fft2d(img)
-    y = yy + (np.random.normal(size=img.shape) + 1j * np.random.normal(size=img.shape)) * args.noiselvl / 255. / np.sqrt(2)
+    y = yy + (np.random.normal(size=imgpad.shape) + 1j * np.random.normal(size=imgpad.shape)) * args.noiselvl / 255. / np.sqrt(2)
     y = np.abs(y)
 
 x = algo.hio(y, mask, args.iter, beta=args.beta)
 # x = algo.oss(y, mask)
 # x = algo.wf(y, mask, args.iter)
 
-img = img[mask].reshape((n, m))
-x = x[mask].reshape((n, m))
-# x2 = x2[mask].reshape((n, m))
-
+x = x[mask].reshape(img.shape)
 
 if args.display:
     tools.stackview([img, x], method='Pillow')

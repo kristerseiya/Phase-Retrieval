@@ -25,7 +25,7 @@ def hio(y, mask, iter, beta=0.9, verbose=False):
 
         # residual = np.power(y - np.abs(new_f), 2).mean()
 
-    return x_curr
+    return x_prev
 
 def oss(y, mask, beta=0.9, verbose=False):
 

@@ -1,5 +1,6 @@
 
 import numpy as np
+import torch
 from PIL import Image
 from scipy.fftpack import fft, ifft, fftshift
 import argparse
@@ -8,6 +9,7 @@ import optim
 import algo
 import tools
 from Denoisers import dnsr
+import likelihood
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--image', help='path to image', type=str, required=True)
@@ -59,9 +61,10 @@ elif args.noise == 'poisson':
 
 elif args.noise == 'rician':
     yy = tools.fft2d(imgpad)
-    y = yy + (np.random.normal(size=imgpad.shape) + 1j * np.random.normal(size=imgpad.shape)) * args.noiselvl / 255. / np.sqrt(2)
+    y = yy + (np.random.normal(size=imgpad.shape) + 1j * np.random.normal(size=imgpad.shape)) * args.noiselvl / 255.
     y = np.abs(y)
-    sigma = np.std(y - np.abs(yy))*255
+    sigma = args.noiselvl if args.noiselvl > 0 else 1
+    # sigma = np.std(y - np.abs(yy))*255
 
 # x = np.random.rand(*y.shape)
 # x[~mask] = np.zeros(m-n)
@@ -76,57 +79,37 @@ v = algo.hio(y, mask, args.hioiter, beta=args.beta, verbose=False)
 # v[~mask] = np.zeros(img.size - mask.sum())
 
 v_arr = []
-v_arr += [np.real(imgpad), np.imag(imgpad)]
 v_arr += [v]
 
-
-class FourMagMSE:
-    def __init__(self, y, alpha, mask):
-        self.y = y
-        self.alpha = alpha
-        self.mask = mask
-
-    def __call__(self, x):
-        f = tools.fft2d(x)
-        return np.real(self.alpha * np.sum((y - np.abs(f))**2))
-
-    def grad(self, x):
-        f = tools.fft2d(x)
-        return self.alpha * np.real(tools.ifft2d(f - y * f / np.abs(f)))
-
-    def prox(self, x, tau=1):
-        z = x
-        zf = tools.fft2d(z)
-        mag = 1 / (self.alpha + tau) * (self.alpha * self.y + tau * np.abs(zf))
-        res = mag * np.exp(1j*np.angle(zf))
-        res = tools.ifft2d(res)
-        return res
+y_t = tools.numpy2torch(y).type(torch.float32)
+v_t = tools.numpy2torch(v).type(torch.float32)
+mask_t = tools.numpy2torch(mask)
 
 class SpacePrior:
     def __init__(self, mask, supdim):
         self.mask = mask
         self.supdim = supdim
-        self.denoiser = dnsr.cDnCNN('Denoisers/dnsr/DnCNN/weights/cDnCNNv6_1-50.pth')
+        self.denoiser = dnsr.cDnCNN('Denoisers/dnsr/DnCNN/weights/cDnCNNv6_1-50.pth', use_tensor=True)
 
     def prox(self, x):
-        v = np.zeros(x.shape)
+        v = torch.zeros_like(x)
         xs = (x[self.mask]).reshape(self.supdim)
-
-        v[self.mask] = self.denoiser(np.abs(xs)).flatten()
+        xs = xs.unsqueeze(0).unsqueeze(0)
+        v[self.mask] = self.denoiser(xs).flatten()
 
         idx = (v < 0) * self.mask
-        v[idx] = np.zeros(idx.sum())
-        return v * np.exp(1j * np.angle(x))
+        v[idx] = torch.zeros(idx.sum())
+        return v
 
-prior = SpacePrior(mask, img.shape)
+prior = SpacePrior(mask_t, img.shape[::-1])
 
 for it, a in zip(args.pnpiter, args.sigma):
-    fidelity = FourMagMSE(y, a**2 / (sigma**2), mask)
-    prior.denoiser.set_param(a / 255.)
+    fidelity = likelihood.FourierMagRician(1*y_t, (sigma/255.)**2, (a/255.)**2, 1)
+    prior.denoiser.set_param(a/255.)
     optimizer = optim.ADMM(fidelity, prior)
-    optimizer.init(v, np.zeros(v.shape))
-    v = optimizer.run(iter=it, return_value='v', verbose=False)
-    v_arr += [np.abs(v)]
+    optimizer.init(v_t, torch.zeros_like(v_t))
+    v_t = optimizer.run(iter=it, return_value='v', verbose=True)
+    v_arr += [tools.torch2numpy(v_t)]
 
 # fidelity = FourMagMSE(y, 25**2 / (sigma**2), mask)
 # # denoiser = dnsr.DnCNN('Denoisers/dnsr/DnCNN/weights/dncnn25_17.pth')

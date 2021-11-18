@@ -27,7 +27,7 @@ class ADMM:
             xu = xr + u
 
             v = self.g.prox(xu)
-            
+
             diff = xr - v
             u = u + diff
 

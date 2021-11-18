@@ -6,6 +6,7 @@ from scipy.signal import fftconvolve as convolve
 from scipy.fftpack import fft, ifft
 import matplotlib.pyplot as plt
 from scipy import ndimage
+import torch
 
 def idct2d(x):
     return idct(idct(x, axis=0, norm='ortho'), axis=1, norm='ortho')
@@ -194,3 +195,16 @@ def msssim(img1, img2, scale=None):
         im2 = filtered_im2[::2, ::2]
     return (np.prod(mcs[0:level-1]**weight[0:level-1])*
                     (mssim[level-1]**weight[level-1]))
+
+
+def torch2numpy(x):
+    x = x.detach().cpu()
+    x = x.squeeze(0).squeeze(0)
+    x = x.permute([1, 0])
+    return x.numpy()
+
+def numpy2torch(x):
+    x = torch.from_numpy(x)
+    x = x.unsqueeze(0).unsqueeze(0)
+    x = x.permute([0, 1, 3, 2])
+    return x

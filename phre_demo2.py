@@ -104,7 +104,7 @@ class SpacePrior:
 prior = SpacePrior(mask_t, img.shape[::-1])
 
 for it, a in zip(args.pnpiter, args.sigma):
-    fidelity = likelihood.FourierMagRician(1*y_t, (sigma/255.)**2, (a/255.)**2, 1)
+    fidelity = likelihood.FourierMagRician(y_t, sigma/255., a/255.)
     prior.denoiser.set_param(a/255.)
     optimizer = optim.ADMM(fidelity, prior)
     optimizer.init(v_t, torch.zeros_like(v_t))

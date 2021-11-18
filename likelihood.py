@@ -20,11 +20,6 @@ class Rician(TorchDistribution):
 
     def log_prob(self, value):
         s2 = self.scale.square()
-        # return (
-        #     value.log() - s2.log()
-        #     - 0.5 * (value.square() + self.loc.square()) / s2
-        #     + torch.special.i0(value * self.loc / s2).log()
-        # ).sum()
         return (
             value.log() - s2.log()
             - 0.5 * (value - self.loc).square() / s2
@@ -51,43 +46,22 @@ class FourierMagGaussian:
         mag = 1 / (self.alpha + tau) * (self.alpha * self.y + tau * np.abs(zf))
         res = mag * np.exp(1j*np.angle(zf))
         res = np.real(tools.ifft2d(res))
+        res = tools.ifft2d(res)
         return res
 
-# class FourierMagGaussian:
-#     def __init__(self, y, alpha, mask):
-#         self.y = y
-#         self.alpha = alpha
-#         self.mask = mask
-#
-#     def __call__(self, x):
-#         f = tools.fft2d(x)
-#         return np.real(self.alpha * np.sum((y - np.abs(f))**2))
-#
-#     def grad(self, x):
-#         f = tools.fft2d(x)
-#         return self.alpha * np.real(tools.ifft2d(f - y * f / np.abs(f)))
-#
-#     def prox(self, x, tau=1):
-#         z = x
-#         zf = tools.fft2d(z)
-#         mag = 1 / (self.alpha + tau) * (self.alpha * self.y + tau * np.abs(zf))
-#         res = mag * np.exp(1j*np.angle(zf))
-#         res = tools.ifft2d(res)
-#         return res
-
 class FourierMagRician:
-    def __init__(self, y, n2, t2):
+    def __init__(self, y, lik_scale, pri_scale):
         self.y = y
-        self.n2 = n2
-        self.t2 = t2
+        self.n_scale = lik_scale
+        self.t_scale = pri_scale
 
     def _posterior(self, v):
-        x = pyro.sample("x", Rician(v, np.sqrt(self.t2)).to_event(2))
-        pyro.sample("y", Rician(x, np.sqrt(self.n2)).to_event(2), obs=self.y)
+        x = pyro.sample("x", Rician(v, self.t_scale).to_event(2))
+        pyro.sample("y", Rician(x, self.n_scale).to_event(2), obs=self.y)
 
     def _guide(self, v):
         x_map = pyro.param("x_map",
-                           (np.sqrt(self.n2)*v + np.sqrt(self.t2)*self.y) / (np.sqrt(self.n2) + np.sqrt(self.t2)),
+                           (self.n_scale*v + self.t_scale*self.y) / (self.n_scale + self.t_scale),
                            constraint=constraints.positive)
         pyro.sample("x", dist.Delta(x_map, event_dim=2))
 
